@@ -18,6 +18,10 @@ def write_file(working_directory, file_path, content):
         with open(full_path, "wt", encoding="utf8") as output_file:
             output_file.write(content)
 
+        print(
+            f'Successfully wrote to "{file_path}" ({len(content)} characters written)'
+        )
+
     except Exception as e:
         print(f"Error: unknown error occurred, {e}")
 
