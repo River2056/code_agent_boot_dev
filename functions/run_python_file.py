@@ -28,36 +28,34 @@ def run_python_file(working_directory, file_path, args=[]):
     working = os.path.abspath(working_directory)
     parent = os.path.abspath(os.path.join(working, file_path))
     if parent.count(working) <= 0:
-        print(
-            f'Error: Cannot execute "{file_path}" as it is outside the permitted working directory'
-        )
-        return
+        return f'Error: Cannot execute "{file_path}" as it is outside the permitted working directory'
 
     full_path = os.path.join(working, file_path)
     if not os.path.exists(full_path):
-        print(f'Error: File "{file_path}" not found.')
-        return
+        return f'Error: File "{file_path}" not found.'
 
     _, ext = os.path.splitext(full_path)
     if ".py" != ext:
-        print(f'Error: "{file_path}" is not a Python file.')
-        return
+        return f'Error: "{file_path}" is not a Python file.'
 
     commands = ["python3", full_path, *args]
     try:
+        result = []
         output = subprocess.run(commands, capture_output=True, timeout=30)
         stdout = output.stdout
         stderr = output.stderr
         if stdout is not None and stderr is not None:
-            print(f"STDOUT: {stdout}")
-            print(f"STDERR: {stderr}")
+            result.append(f"STDOUT: {stdout}")
+            result.append(f"STDERR: {stderr}")
         else:
-            print(f"No output produced")
+            result.append(f"No output produced")
 
         if output.returncode != 0:
-            print(f"Process exited with code {output.returncode}")
+            result.append(f"Process exited with code {output.returncode}")
+
+        return "\n".join(result)
     except Exception as e:
-        print(f"Error: executing Python file: {e}")
+        return f"Error: executing Python file: {e}"
 
 
 if __name__ == "__main__":

@@ -5,10 +5,11 @@ from dotenv import load_dotenv
 from google import genai
 from google.genai import types
 
-from functions.get_files_info import schema_get_files_info
-from functions.get_file_content import schema_get_file_content
-from functions.write_file import schema_write_file
-from functions.run_python_file import schema_run_python_file
+from functions.get_files_info import schema_get_files_info, get_files_info
+from functions.get_file_content import schema_get_file_content, get_file_content
+from functions.write_file import schema_write_file, write_file
+from functions.run_python_file import schema_run_python_file, run_python_file
+from functions.call_functions import call_function
 
 
 def main():
@@ -28,7 +29,7 @@ def main():
     api_key = os.environ.get("GEMINI_API_KEY")
 
     # available functions
-    available_functions = types.Tool(
+    available_functions_schema = types.Tool(
         function_declarations=[
             schema_get_files_info,
             schema_get_file_content,
@@ -63,7 +64,7 @@ def main():
         model="gemini-2.0-flash-001",
         contents=messages,
         config=types.GenerateContentConfig(
-            tools=[available_functions], system_instruction=system_prompt
+            tools=[available_functions_schema], system_instruction=system_prompt
         ),
     )
 
@@ -77,8 +78,19 @@ def main():
         print(f"Response tokens: {response_tokens}")
     print(f"Response: {response}")
     if function_calls and len(function_calls) > 0:
+        func_res = []
         for fc in function_calls:
             print(f"calling function: {fc.name}, {fc.args}")
+            func_args = fc.args if fc.args else {}
+            content = call_function(fc, verbose=is_verbose, **func_args)
+            if not content.parts:
+                raise Exception(f"Error: content doesn't contain parts")
+            if not content.parts[0].function_response:
+                raise Exception(f"Error: malform function response")
+
+            func_res.append(content.parts[0].function_response)
+            if is_verbose:
+                print(f"-> {content.parts[0].function_response.response}")
 
 
 def test():
